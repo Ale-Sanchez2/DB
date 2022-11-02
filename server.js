@@ -14,58 +14,120 @@ const db = new sqlite3.Database(dbName, (err) =>{
 });
 
 
-app.post('/players', (req, res) =>{
-    let sql =`INSERT 
-                INTO Player(Name, Sprite)
-              VALUES(? , ?)`;
-    console.log("aca no es 1" );
-    let params =[req.body.name, req.body.sprite];
-    db.run(sql, params, (err) =>{
-        if (err){
-            console.error(err.message);
-            return;
+app.post('/players/', (req, res) => {
+    let sql = `INSERT
+                 INTO Player(Name, Puntaje, Cosmeticos)
+               VALUES (?, ?, ?)`;
+    let params = [req.body.name, req.body.puntaje, req.body.cosmeticos];
+    db.run(sql, params, (err) => {
+      if (err) {
+        console.error(err.message);
+        return;
+      }
+  
+      console.log(`Added player with name ${req.body.name} and sprite ${req.body.puntaje}.`);
+  
+      sql = `SELECT Id
+               FROM Player
+               WHERE Name = ?`;
+  
+      let params = [req.body.name];
+  
+      db.get(sql, params, (err, row) => {
+        if (err) {
+          console.error(err.message);
+          return;
         }
-        console.log("aca no es 2" );
-        console.log(`Added player with name ${req.body.name} and sprite ${req.body.sprite}.`);
-        console.log("aca no es 3" );
-        sql = `SELECT Id
-                FROM Player
-                WHERE Name = ? `;
-        let params = [req.body.name];
-        console.log("aca no es 4" );
-        db.get(sql, params, (err, row) =>{
-            if (err){
-                console.error(err.message);
-                return;
-            }
-            console.log("aca no es 5" );
-            res.end(row.Id.toString());
-            console.log("aca no es 6" );
-
-        });
-    
+  
+        res.end(row.Id.toString());
+      });
     });
-});
-
-
-app.get('/players', (req, res) =>{
-    const sql =`SELECT Id,
-                       Name,
-                       Sprite
-                FROM Player`;
-
-    const params =[];
-    db.all(sql, params, (err, rows) =>{
-        if (err){
-            console.error(err.message);
-            return;
-        }
-        
-        res.end(JSON.stringify(rows));
-
+  });
+  
+  app.get('/players/', (req, res) => {
+    let sql = `SELECT Id, Name, Puntaje, Cosmeticos
+                   FROM Player`;
+    let params = [];
+    console.log("a");
+    db.all(sql, params, (err, rows) => {
+      if (err) {
+        console.error(err.message);
+        return;
+      }
+  
+      res.end(JSON.stringify(rows));
     });
-
-});
+  });
+  
+  
+  app.get('/players/id:name', (req, res) => {
+    const sql = `SELECT Id
+                   FROM Player
+                   WHERE Name = "${req.params.name}"`;
+    const params = [];
+  
+    console.log(params);
+    db.all(sql, params, (err, rows) => {
+      if (err) {
+        console.error(err.message);
+        return;
+      }
+  
+      res.end(JSON.stringify(rows));
+    });
+  });
+  
+  app.get('/players/cosme:id', (req, res) => {
+    const sql = `SELECT Cosmeticos
+                   FROM Player
+                   WHERE Id = ${req.params.id}`;
+    const params = [];
+    console.log(params);
+    db.get(sql, params, (err, rows) => {
+      if (err) {
+        console.error(err.message);
+        return;
+      }
+  
+      res.end(JSON.stringify(rows));
+    });
+  });
+  app.get('/players/puntaje:id', (req, res) => {
+    const sql = `SELECT 
+                    Puntaje 
+                   FROM Player
+                   WHERE Id = ${req.params.id}`;
+    const params = [];
+    console.log(params);
+    db.get(sql, params, (err, row) => {
+      if (err) {
+        console.error(err.message);
+        return;
+      }
+  
+      res.end(JSON.stringify(row));
+    });
+  });
+  
+  app.put('/players/:id', (req, res) => {
+    let sql = `UPDATE Player
+                 SET  Puntaje = ?, 
+                      Cosmeticos = ?
+                WHERE Id = ${req.params.id}`;
+    let params = [req.body.puntaje, req.body.cosmeticos ];
+    console.log(params);
+  
+    db.run(sql, params, (err) => {
+      if (err) {
+        console.error(err.message);
+        return;
+      }
+  
+      console.log(`Added player with id ${req.params.id} and sprite ${req.params.puntaje}.`);
+  
+      res.end();
+      });
+  });
 
 
 const server = app.listen(5000, () =>{
@@ -74,15 +136,16 @@ const server = app.listen(5000, () =>{
     console.log(`listening at http://localhost:5000`);
 
 
-    const sql = `CREATE TABLE IF NOT EXISTS Player(
-                    Id      INTEGER         NOT NULL    PRIMARY KEY     AUTOINCREMENT,
-                    Name    INVARCHAR(50)   NOT NULL,
-                    Sprite  INVARCHAR(50)   NOT NULL
-                );`;
-    db.run(sql,[],(err) =>{
-        if (err){
+    const sql = `CREATE TABLE IF NOT EXISTS Player (
+        Id     INTEGER      NOT NULL PRIMARY KEY AUTOINCREMENT,
+        Name   NVARCHAR(50) NOT NULL ,
+        Puntaje INTEGER(50) NOT NULL,
+        Cosmeticos NVARCHAR(50)  
+      );`;
+
+    db.run(sql, [], (err) => {
+        if (err)
             console.error(err.message);
-            return;
-        }
-    })
+        return;
+    });
 })
